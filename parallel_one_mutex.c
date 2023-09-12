@@ -3,9 +3,9 @@
 #include <pthread.h>
 #include <time.h>
 
-struct node {
+struct Node {
     int data;
-    struct node *next;
+    struct Node *next;
 };
 
 int n;                 //number of values
@@ -18,15 +18,15 @@ int numMember, numInsert, numDelete;
 
 int count, count_m, count_i, count_d = 0; //to store the number of operations executed
 
-struct node *head = NULL;
+struct Node* head = NULL;
 
 pthread_mutex_t mutex;
 
-int Insert(struct node **head_pp, int value);
+void Insert(struct Node** head_pp, int value);
 
-int Delete(struct node **head_pp, int value);
+void Delete(struct Node** head_pp, int value);
 
-int Member(struct node *head_p, int value);
+int Member(struct Node* head_p, int value);
 
 void *Thread_function();
 
@@ -135,67 +135,58 @@ void *Thread_function() {
     return NULL;
 }
 
-int Member(struct node *head, int value) {
-    struct node *current= head;
 
-    while (current != NULL && current->data < value)
+int Member(struct Node* head, int value) {
+    struct Node* current = head;
+
+    while (current != NULL) {
+        if (current->data == value) {
+            return 1; 
+        }
         current = current->next;
-
-    if (current== NULL || current->data > value) {
-        return 0;
     }
-    else {
-        return 1;
-    }
-
+    return 0; 
 }
 
-int Insert(struct node **head, int value) {
-    struct node *current = *head;
-    struct node *prev = NULL;
-    struct node *temporary = NULL;
 
-    while (current != NULL && current->data < value) {
+void Insert(struct Node** head, int value) {
+    struct Node* current = *head;
+
+    while (current != NULL) {
+        if (current->data == value) {
+            return;
+        }
+        current = current->next;
+    }
+
+    struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
+
+    if (newNode == NULL) {
+        fprintf(stderr, "Memory allocation failed.\n");
+        exit(1);
+    }
+
+    newNode->data = value;
+    newNode->next = *head;
+    *head = newNode;
+}
+
+
+void Delete(struct Node** head, int value) {
+    struct Node* current = *head;
+    struct Node* prev = NULL;
+
+    while (current != NULL) {
+        if (current->data == value) {
+            if (prev == NULL) {
+                *head = current->next;
+            } else {
+                prev->next = current->next;
+            }
+            free(current);
+            return;
+        }
         prev = current;
         current = current->next;
     }
-
-    if (current == NULL || current->data > value) {
-        temporary = malloc(sizeof(struct node));
-        temporary->data = value;
-        temporary->next = current;
-
-        if (prev == NULL)
-            *head = temporary;
-        else
-            prev->next = temporary;
-
-        return 1;
-    }
-    else
-        return 0;
-}
-
-int Delete(struct node **head, int value) {
-    struct node *current = *head;
-    struct node *prev = NULL;
-
-    while (current != NULL && current->data < value) {
-        prev = current;
-        current = current->next;
-    }
-    if (current != NULL && current->data == value) {
-        if (prev == NULL) {
-            *head = current->next;
-            free(current);
-        }
-        else {
-            prev->next = current->next;
-            free(current);
-        }
-
-        return 1;
-    }
-    else
-        return 0;
 }
