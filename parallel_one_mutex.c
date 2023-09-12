@@ -1,0 +1,201 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <time.h>
+
+struct node {
+    int data;
+    struct node *next;
+};
+
+int n;                 //number of values
+int m;                 //number of operations in each execution
+int thread_count;       //number of threads
+
+float mMember, mInsert, mDelete;
+
+int numMember, numInsert, numDelete;
+
+int count, count_m, count_i, count_d = 0; //to store the number of operations executed
+
+struct node *head = NULL;
+
+pthread_mutex_t mutex;
+
+int Insert(struct node **head_pp, int value);
+
+int Delete(struct node **head_pp, int value);
+
+int Member(struct node *head_p, int value);
+
+void *Thread_function();
+
+int main(int argc, char *argv[]) {   
+    pthread_t *thread_handlers;
+    thread_handlers = malloc(thread_count * sizeof(pthread_t));
+
+    clock_t start_time, end_time;
+    double elapsed_time;
+
+    srand(time(NULL));
+
+    if (argc != 7) {
+        fprintf(stderr,
+                "error in input format. correct format: <thread_count> <n> <m> <m_member_frac> <m_insert_frac> <m_delete_frac>\n");
+        exit(0);
+    }
+
+    n = (int) strtol(argv[2], NULL, 10);
+    m = (int) strtol(argv[3], NULL, 10);
+    mMember = (float) atof(argv[4]);
+    mInsert = (float) atof(argv[5]);
+    mDelete = (float) atof(argv[6]);
+    thread_count = strtol(argv[1], NULL, 10);
+
+    if (thread_count <= 0) {
+        fprintf(stderr, "error. thread count should be greater than 0\n");
+        exit(0);
+    }  
+ 
+    numMember = m * mMember;
+    numInsert = m * mInsert;
+    numDelete = m - (numMember + numInsert);
+
+    printf("length : %d\n", n); 
+    printf("No. of operations : %d\n", m);
+    printf("No. of member operations : %d\n", numMember); 
+    printf("No. of insert operations : %d\n", numInsert); 
+    printf("No. of delete operations : %d\n", numDelete); 
+    
+    // Populate the linked list with n random, unique values
+    for (int i = 0; i < n; i++) {
+        int value;
+        do {
+            value = rand() % ((1 << 16) - 1); // Generate a random value between 0 and 2^16 - 1
+        } while (Member(head, value)); // Ensure it's unique
+        Insert(&head, value);
+    }
+    printf("Linked list created \n");
+    
+    start_time = clock();
+
+    // Initializing the mutex
+    pthread_mutex_init(&mutex, NULL);
+
+    // Thread Creation
+    int i = 0;
+
+    while (i < thread_count) {
+        pthread_create(&thread_handlers[i], NULL, (void *) Thread_function, NULL);
+        i++;
+    }
+    printf("Threads created \n");
+
+    // Thread Join
+    i = 0;
+    while (i < thread_count) {
+        pthread_join(thread_handlers[i], NULL);
+        i++;
+    }
+
+    printf("Threads joined \n");
+
+    end_time = clock();
+    elapsed_time = (double)(end_time - start_time) / CLOCKS_PER_SEC;
+    printf("Elapsed time : %f\n", elapsed_time);
+
+    pthread_mutex_destroy(&mutex);
+    free(thread_handlers);
+
+    return 0;
+}
+
+void *Thread_function() {
+    while (count < m) {
+        if (count_m < mMember){
+            pthread_mutex_lock(&mutex);
+            Member(head, rand() % (1 << 16));
+            count++;
+            count_m++;
+            pthread_mutex_unlock(&mutex);
+        } else if (count_i < mInsert ) {
+            pthread_mutex_lock(&mutex);
+            Insert(&head, rand() % (1 << 16));
+            count++;
+            count_i++;
+            pthread_mutex_unlock(&mutex);
+        } else {
+            pthread_mutex_lock(&mutex);
+            Delete(&head, rand() % (1 << 16));
+            count++;
+            pthread_mutex_unlock(&mutex);
+        }   
+        printf("Count : %d\n", count) ;    
+    }
+    return NULL;
+}
+
+int Member(struct node *head, int value) {
+    struct node *current= head;
+
+    while (current != NULL && current->data < value)
+        current = current->next;
+
+    if (current== NULL || current->data > value) {
+        return 0;
+    }
+    else {
+        return 1;
+    }
+
+}
+
+int Insert(struct node **head, int value) {
+    struct node *current = *head;
+    struct node *prev = NULL;
+    struct node *temporary = NULL;
+
+    while (current != NULL && current->data < value) {
+        prev = current;
+        current = current->next;
+    }
+
+    if (current == NULL || current->data > value) {
+        temporary = malloc(sizeof(struct node));
+        temporary->data = value;
+        temporary->next = current;
+
+        if (prev == NULL)
+            *head = temporary;
+        else
+            prev->next = temporary;
+
+        return 1;
+    }
+    else
+        return 0;
+}
+
+int Delete(struct node **head, int value) {
+    struct node *current = *head;
+    struct node *prev = NULL;
+
+    while (current != NULL && current->data < value) {
+        prev = current;
+        current = current->next;
+    }
+    if (current != NULL && current->data == value) {
+        if (prev == NULL) {
+            *head = current->next;
+            free(current);
+        }
+        else {
+            prev->next = current->next;
+            free(current);
+        }
+
+        return 1;
+    }
+    else
+        return 0;
+}
