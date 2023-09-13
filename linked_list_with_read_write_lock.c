@@ -100,7 +100,7 @@ int main(int argc, char *argv[]) {
     FILE *fpt;
 
   // Open the file pointer in write mode.
-  fpt = fopen("linked_list_with_read_write_lock_case_1.csv", "a");
+  fpt = fopen("linked_list_with_read_write_lock_case_1_thread2.csv", "a");
 
   // Write the data to the file pointer, separated by commas.
   fprintf(fpt,"%f\n", elapsed_time);
