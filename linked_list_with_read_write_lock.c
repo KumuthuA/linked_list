@@ -97,7 +97,17 @@ int main(int argc, char *argv[]) {
     pthread_rwlock_destroy(&rwlock);
 
     printf("Linked List with read write locks Time Spent : %.6f\n", elapsed_time);
+    FILE *fpt;
 
+  // Open the file pointer in write mode.
+  fpt = fopen("linked_list_with_read_write_lock_case_1.csv", "a");
+
+  // Write the data to the file pointer, separated by commas.
+  fprintf(fpt,"%f\n", elapsed_time);
+
+
+  // Close the file pointer.
+  fclose(fpt);
     return 0;
 }
 
