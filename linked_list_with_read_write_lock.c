@@ -108,7 +108,6 @@ void Insert(struct Node** head, int value) {
         }
         current = current->next;
     }
-
     struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
 
     if (newNode == NULL) {
@@ -137,6 +136,15 @@ void Delete(struct Node** head, int value) {
         current = current->next;
     }
 }
+void PrintList(struct Node* head) {
+    struct Node* current = head;
+    while (current != NULL) {
+        printf("%d -> ", current->data);
+        current = current->next;
+    }
+    printf("NULL\n");
+}
+
 void *Thread_function(void *thread_id) {
     int local_m = 0;int local_m_insert = 0;int local_m_delete = 0;int local_m_member = 0;
 
