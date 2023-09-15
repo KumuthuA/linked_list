@@ -43,6 +43,7 @@ int main(int argc, char *argv[]) {
     m_member_frac = (float) atof(argv[4]);
     m_insert_frac = (float) atof(argv[5]);
     m_delete_frac = (float) atof(argv[6]);
+    
     pthread_t *thread_handlers;
     thread_handlers = (pthread_t*)malloc(sizeof(pthread_t) * num_thread);
     clock_t start_time, end_time;
